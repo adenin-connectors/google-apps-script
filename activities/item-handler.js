@@ -11,27 +11,18 @@ module.exports = async (activity) => {
       return;
     }
 
-    const request = activity.Request.Data;
-    let entity = {};
+    const entity = activity.Request.Data;
     let collections = [];
-    if (request._type) {
-      let date = new Date(request.date).toISOString();
-      entity = {
-        _type: request._type.trim(),
-        id: "" + request.id.trim(),
-        title: request.title.trim(),
-        description: request.description.trim(),
-        date: date.trim(),
-        link: request.link.trim()
-      };
+    if (entity._type) {
+      let date = new Date(entity.date).toISOString();
 
-      let assignedTo = request.assignedto.split(',').map(assignee => assignee.trim());
-      let roles = request.roles.split(',').map(role => role.trim());
+      let assignedTo = entity.assignedto.split(',').map(assignee => assignee.trim());
+      let roles = entity.roles.split(',').map(role => role.trim());
 
       if (assignedTo.length > 0 || roles.length > 0) {
         // case 1: A collection "all" is returned with users and roles
         collections.push({ name: "all", users: assignedTo, roles: roles, date: date });
-        let done = request.done != "";
+        let done = entity.done != "";
         if (!done) {
           // case 2: When open == true we return collection “open”, with users and roles
           collections.push({ name: "open", users: assignedTo, roles: roles, date: date });
@@ -44,16 +35,16 @@ module.exports = async (activity) => {
             collections.push({ name: "my", users: [], roles: roles, date: date });
           }
 
-          if (request.dueDate) {
-            let dueDate = new Date(request.dueDate).toISOString();
+          if (entity.dueDate) {
+            let dueDate = new Date(entity.dueDate).toISOString();
 
             // case 4: When DueDate is provided and open we return a collection “due”, with users and roles; date = DueDate
-            collections.push({ name: "due", users: request.assignedTo, roles: roles, date: dueDate });
+            collections.push({ name: "due", users: assignedTo, roles: roles, date: dueDate });
 
             // case 5: When DueDate is provided and open we return a collection “my-due”, with only users: AssignedTo, date = DueDate
             // if assignedTo is empty we use roles
-            if (request.assignedTo.length > 1) {
-              collections.push({ name: "my-due", users: request.assignedTo, roles: [], date: dueDate });
+            if (assignedTo.length > 1) {
+              collections.push({ name: "my-due", users: assignedTo, roles: [], date: dueDate });
             } else {
               collections.push({ name: "my-due", users: [], roles: roles, date: dueDate });
             }
